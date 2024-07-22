@@ -60,7 +60,7 @@ This is a simple Flask API to fetch Royale High item names and their community v
 
 2. **Access the API**:
 
-    Open your web browser or API client (like Postman) and navigate to:
+    Open Google Chrome or API client (like Postman) and navigate to:
 
     ```
     http://127.0.0.1:5000/items
