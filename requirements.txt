@@ -1,3 +1,5 @@
 Flask
+Flask-Caching
+apscheduler
 beautifulsoup4
 requests
