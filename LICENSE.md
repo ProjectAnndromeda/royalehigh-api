@@ -24,6 +24,9 @@ The code is provided "as is," without any warranties or conditions. The author m
 ### Limitation of Liability
 To the fullest extent permitted by law, the author disclaims all liability for any claims, damages, or other legal actions resulting from the use of this code, including but not limited to any violations of third-party terms of service, such as those of Traderie. Users of this code are solely responsible for ensuring their use of the code complies with all applicable laws and third-party agreements.
 
+### Compliance Responsibility
+The user acknowledges and agrees that they are solely responsible for ensuring that their use of this software and any associated data complies with all applicable laws, regulations, and third-party terms of service. This includes, but is not limited to, terms of service or usage policies of any data source or platform accessed through this software, including but not limited to Traderie.
+
 ### No Endorsement
 The use of this code does not imply any endorsement or affiliation with any third-party services or platforms, including Traderie. The author is not responsible for any misuse of the code or any resulting legal or contractual issues.
 
