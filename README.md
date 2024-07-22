@@ -14,7 +14,7 @@ This is a simple Flask API to fetch Royale High item names and their community v
 1. **Clone the Repository**:
 
     ```bash
-    git clone https://github.com/yourusername/royalehigh-api.git
+    git clone https://github.com/ProjectAnndromeda/royalehigh-api.git
     cd royalehigh-api
     ```
 
