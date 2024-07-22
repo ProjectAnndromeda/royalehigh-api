@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -6,13 +7,17 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 def fetch_items_from_page(page_number):
     url = f'https://traderie.com/royalehigh/products?page={page_number}'
     
-    # Configure Selenium to use Chrome in headless mode
+    # Configure Selenium to use Chrome in headless mode with a custom user agent
     chrome_options = Options()
     chrome_options.add_argument("--headless")
+    custom_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={custom_user_agent}')
+    
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     
     driver.get(url)
