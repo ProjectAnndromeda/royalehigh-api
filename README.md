@@ -84,3 +84,11 @@ This is a simple Flask API to fetch Royale High item names and their community v
     },
     ...
 ]
+```
+
+## Attribution
+
+If you use or modify this code, please include the following attribution in any related documentation or publicly accessible materials: "Powered by Anndromeda™ Database by Alina."
+
+## License
+This code is provided under the terms of the [LICENSE.txt](LICENSE.txt) file included in this distribution.
