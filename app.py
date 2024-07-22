@@ -7,12 +7,11 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
 def fetch_items_from_page(page_number):
     url = f'https://traderie.com/royalehigh/products?page={page_number}'
     
-    # Configure Selenium to use Chrome in headless mode with a custom user agent
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     custom_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -22,13 +21,10 @@ def fetch_items_from_page(page_number):
     
     driver.get(url)
     
-    # Wait for content to load, you might need to adjust the wait time or method
     driver.implicitly_wait(10)
     
-    # Debugging: print the page source
     print(driver.page_source)
     
-    # Find elements that match your criteria
     item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
     
     if not item_containers:
