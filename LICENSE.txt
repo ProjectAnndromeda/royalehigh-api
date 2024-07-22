@@ -21,5 +21,11 @@ You are free to:
 ### No Warranty
 The code is provided "as is," without any warranties or conditions. The author makes no representations or warranties about the suitability of the code for any purpose, and is not responsible for any damages or issues arising from its use.
 
+### Limitation of Liability
+To the fullest extent permitted by law, the author disclaims all liability for any claims, damages, or other legal actions resulting from the use of this code, including but not limited to any violations of third-party terms of service, such as those of Traderie. Users of this code are solely responsible for ensuring their use of the code complies with all applicable laws and third-party agreements.
+
+### No Endorsement
+The use of this code does not imply any endorsement or affiliation with any third-party services or platforms, including Traderie. The author is not responsible for any misuse of the code or any resulting legal or contractual issues.
+
 ### Full License Text
 For more details, please refer to the full Creative Commons Attribution 4.0 International License text at [https://creativecommons.org/licenses/by/4.0/](https://creativecommons.org/licenses/by/4.0/).
