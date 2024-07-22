@@ -27,14 +27,13 @@ def fetch_items_from_page(page_number):
     
     driver.implicitly_wait(10)
     
-    # Check for "No results could be found" message
     try:
         no_results_message = driver.find_element(By.CLASS_NAME, 'no-items')
         if "No results could be found" in no_results_message.text:
             driver.quit()
             return []
     except:
-        pass  # If no message is found, continue to scrape items
+        pass
 
     item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
     
