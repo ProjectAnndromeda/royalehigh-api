@@ -14,8 +14,6 @@ def fetch_items_from_page(page_number):
     url = f'https://traderie.com/royalehigh/products?page={page_number}'
     
     chrome_options = Options()
-    # Comment headless for debug mode
-    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
