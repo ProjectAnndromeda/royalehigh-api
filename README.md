@@ -96,9 +96,9 @@ The script uses hard-coded sleep intervals (`time.sleep(2)`) to wait for pages a
 
 ### 2. **Value Retrieval**
 
-The script retrieves item values from elements with the same class name used for both average value and community value on the web page. The script currently assumes that the retrieved value is the average value.
+The script currently captures the average value from elements on the web page. Both average and community values are located under the same parent class and share the same class name.
 
-- **Consideration:** If you need to distinguish between average value and community value, you may need to refine the value extraction logic. Inspect the HTML structure to determine if there are other distinguishing attributes or elements that can help differentiate between these values. You might need to update the class name selectors or apply additional logic to accurately capture the intended value type.
+- **Consideration:** If community values are needed instead of average values, you may need to review and update the class name selectors. Since both values are under the same parent class and use the same class name, adapting the code to capture community values should be straightforward if the distinction is required.
 
 ### 3. **Dependencies and Environment**
 
