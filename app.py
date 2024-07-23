@@ -2,14 +2,16 @@ import signal
 import sys
 import logging
 import warnings
+import time
 from flask import Flask, jsonify
 from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 
 # Suppress SSL and other warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='selenium')
@@ -18,7 +20,6 @@ warnings.filterwarnings("ignore", message=".*SSL.*")
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 logging.getLogger('selenium').setLevel(logging.CRITICAL)
 
-# Set logging level for the Flask app and other libraries
 logging.basicConfig(level=logging.ERROR)
 
 app = Flask(__name__)
@@ -39,8 +40,10 @@ def fetch_items(driver, page_number):
     
     try:
         driver.get(url)
-        driver.set_page_load_timeout(15)  # Set a timeout for page load
-        time.sleep(2)  # Increase sleep time to ensure page is fully loaded
+        
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container'))
+        )
 
         print(f"Page {page_number} loaded")
         
@@ -81,7 +84,7 @@ def get_items():
     start_time = time.time()
     
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")  # Use new headless mode
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -94,18 +97,16 @@ def get_items():
     custom_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     chrome_options.add_argument(f'user-agent={custom_user_agent}')
     
-    # Initialize WebDriver once
     with webdriver.Chrome(
         service=ChromeService(ChromeDriverManager().install()),
         options=chrome_options
     ) as driver:
         while True:
             batch_items = []
-            # Attempt to fetch 5 pages in this batch
             for _ in range(5):
                 items = fetch_items(driver, page_number)
                 if items is None:
-                    break  # Exit loop on error or no more data
+                    break
                 batch_items.extend(items)
                 page_number += 1
 
@@ -114,7 +115,6 @@ def get_items():
                 break
 
             all_items.extend(batch_items)
-            time.sleep(2)  # Add delay to prevent server overload
     
     elapsed_time = time.time() - start_time
     print(f"Scraped {len(all_items)} items in {elapsed_time:.2f} seconds")
