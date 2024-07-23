@@ -86,6 +86,32 @@ This is a simple Flask API to fetch Royale High item names and their community v
 ]
 ```
 
+## Key Considerations
+
+### 1. **Hard-Coded Sleep Times**
+
+The script uses hard-coded sleep intervals (`time.sleep(2)`) to wait for pages and elements to load. While this approach is straightforward and aims to make the program run faster, it may not always be the most efficient or reliable. 
+
+- **Consideration:** Depending on the page’s load times, this delay might be too short or too long. For more precise control, consider implementing dynamic checks for content loading. For instance, use Selenium’s WebDriverWait with expected conditions to wait for specific elements or containers to be fully loaded before proceeding.
+
+### 2. **Value Retrieval**
+
+The script retrieves item values from elements with the same class name used for both average value and community value on the web page. The script currently assumes that the retrieved value is the average value.
+
+- **Consideration:** If you need to distinguish between average value and community value, you may need to refine the value extraction logic. Inspect the HTML structure to determine if there are other distinguishing attributes or elements that can help differentiate between these values. You might need to update the class name selectors or apply additional logic to accurately capture the intended value type.
+
+### 3. **Dependencies and Environment**
+
+- **Dependencies:** Ensure that all required packages listed in `requirements.txt` are installed. Use a virtual environment to manage these dependencies and avoid conflicts with other Python projects.
+  
+- **WebDriver Management:** The script uses `webdriver-manager` to automatically handle ChromeDriver binaries. Ensure that you have Google Chrome installed, as it is required for Selenium to function correctly.
+
+### 4. **Error Handling and Logging**
+
+The script includes basic error handling and logging configurations. It suppresses warnings from Selenium and other libraries to avoid cluttered logs.
+
+- **Consideration:** Adjust logging levels and error handling according to your debugging needs. More granular error handling might be required based on specific use cases or to improve robustness.
+
 ## Attribution
 
 If you use or modify this code, please include the following attribution in any related documentation or publicly accessible materials: "Powered by Anndromeda™ by Alina."
