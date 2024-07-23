@@ -1,3 +1,5 @@
+import signal
+import sys
 from flask import Flask, jsonify
 from flask_cors import CORS
 from selenium import webdriver
@@ -5,15 +7,34 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from concurrent.futures import ThreadPoolExecutor
 import time
 
 app = Flask(__name__)
 CORS(app)
 
+# Global variable to manage WebDriver instances
+drivers = []
+
+def shutdown(signal, frame):
+    print("Shutting down gracefully...")
+    for driver in drivers:
+        try:
+            driver.quit()
+        except:
+            pass
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, shutdown)
+signal.signal(signal.SIGTERM, shutdown)
+
 def fetch_items_from_page(page_number):
     url = f'https://traderie.com/royalehigh/products?page={page_number}'
     
     chrome_options = Options()
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -30,40 +51,47 @@ def fetch_items_from_page(page_number):
         service=ChromeService(ChromeDriverManager().install()),
         options=chrome_options
     )
+    drivers.append(driver)  # Track the driver instance
     
+    items = []
     try:
         driver.get(url)
-        driver.implicitly_wait(5)
+	time.sleep(1)
 
-        no_results_message = driver.find_element(By.CLASS_NAME, 'no-items')
-        if "No results could be found" in no_results_message.text:
-            print(f"No results on page {page_number}")
-            return []
+        try:
+            no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
+            if no_results_message and "No results could be found" in no_results_message[0].text:
+                print(f"No results on page {page_number}")
+                return None  # Return None to signal end of data
+        except:
+            pass
+
+        item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
+        if not item_containers:
+            print(f"No item containers found on page {page_number}")
+        else:
+            print(f"Found {len(item_containers)} items on page {page_number}")
+
+        for container in item_containers:
+            try:
+                name_container = container.find_element(By.CLASS_NAME, 'sc-czkgLR.fsFCnf')
+                item_name = name_container.text
+            except:
+                item_name = "Unknown"
+            try:
+                value_container = container.find_element(By.CLASS_NAME, 'listing-bells')
+                item_value = int(value_container.text.replace(',', ''))
+            except:
+                item_value = 0
+            items.append({"name": item_name, "value": item_value})
+
     except Exception as e:
-        pass
+        print(f"Error on page {page_number}: {e}")
 
-    item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
+    finally:
+        driver.quit()
 
-    if not item_containers:
-        print(f"No item containers found on page {page_number}")
-    else:
-        print(f"Found {len(item_containers)} items on page {page_number}")
-
-    items = []
-    for container in item_containers:
-        try:
-            name_container = container.find_element(By.CLASS_NAME, 'sc-czkgLR.fsFCnf')
-            item_name = name_container.text
-        except:
-            item_name = "Unknown"
-        try:
-            value_container = container.find_element(By.CLASS_NAME, 'listing-bells')
-            item_value = int(value_container.text.replace(',', ''))
-        except:
-            item_value = 0
-        items.append({"name": item_name, "value": item_value})
-
-    driver.quit()
+    print(f"Page {page_number}: Found {len(items)} items")
     return items
 
 @app.route('/items', methods=['GET'])
@@ -74,7 +102,8 @@ def get_items():
     
     while True:
         items = fetch_items_from_page(page_number)
-        if not items:
+        if items is None:
+            print(f"No more data starting from page {page_number}. Stopping.")
             break
         all_items.extend(items)
         page_number += 1
