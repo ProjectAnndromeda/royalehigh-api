@@ -54,7 +54,7 @@ def fetch_items_from_page(page_number):
     items = []
     try:
         driver.get(url)
-        time.sleep(1)
+        time.sleep(1.5)
 
         try:
             no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
