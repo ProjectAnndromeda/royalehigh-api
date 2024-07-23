@@ -7,22 +7,13 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-from concurrent.futures import ThreadPoolExecutor
 import time
 
 app = Flask(__name__)
 CORS(app)
 
-# Global variable to manage WebDriver instances
-drivers = []
-
 def shutdown(signal, frame):
     print("Shutting down gracefully...")
-    for driver in drivers:
-        try:
-            driver.quit()
-        except:
-            pass
     sys.exit(0)
 
 signal.signal(signal.SIGINT, shutdown)
@@ -45,49 +36,46 @@ def fetch_items_from_page(page_number):
     custom_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     chrome_options.add_argument(f'user-agent={custom_user_agent}')
     
-    driver = webdriver.Chrome(
+    items = []
+    
+    # Use context manager to handle WebDriver instance
+    with webdriver.Chrome(
         service=ChromeService(ChromeDriverManager().install()),
         options=chrome_options
-    )
-    drivers.append(driver)  # Track the driver instance
-    
-    items = []
-    try:
-        driver.get(url)
-        time.sleep(1.5)
-
+    ) as driver:
         try:
-            no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
-            if no_results_message and "No results could be found" in no_results_message[0].text:
-                print(f"No results on page {page_number}")
-                return None  # Return None to signal end of data
-        except:
-            pass
+            driver.get(url)
+            time.sleep(1.5)
 
-        item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
-        if not item_containers:
-            print(f"No item containers found on page {page_number}")
-        else:
-            print(f"Found {len(item_containers)} items on page {page_number}")
-
-        for container in item_containers:
             try:
-                name_container = container.find_element(By.CLASS_NAME, 'sc-czkgLR.fsFCnf')
-                item_name = name_container.text
+                no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
+                if no_results_message and "No results could be found" in no_results_message[0].text:
+                    print(f"No results on page {page_number}")
+                    return None  # Return None to signal end of data
             except:
-                item_name = "Unknown"
-            try:
-                value_container = container.find_element(By.CLASS_NAME, 'listing-bells')
-                item_value = int(value_container.text.replace(',', ''))
-            except:
-                item_value = 0
-            items.append({"name": item_name, "value": item_value})
+                pass
 
-    except Exception as e:
-        print(f"Error on page {page_number}: {e}")
+            item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
+            if not item_containers:
+                print(f"No item containers found on page {page_number}")
+            else:
+                print(f"Found {len(item_containers)} items on page {page_number}")
 
-    finally:
-        driver.quit()
+            for container in item_containers:
+                try:
+                    name_container = container.find_element(By.CLASS_NAME, 'sc-czkgLR.fsFCnf')
+                    item_name = name_container.text
+                except:
+                    item_name = "Unknown"
+                try:
+                    value_container = container.find_element(By.CLASS_NAME, 'listing-bells')
+                    item_value = int(value_container.text.replace(',', ''))
+                except:
+                    item_value = 0
+                items.append({"name": item_name, "value": item_value})
+
+        except Exception as e:
+            print(f"Error on page {page_number}: {e}")
 
     print(f"Page {page_number}: Found {len(items)} items")
     return items
