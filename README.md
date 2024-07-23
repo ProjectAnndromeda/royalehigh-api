@@ -88,25 +88,25 @@ This is a simple Flask API to fetch Royale High item names and their community v
 
 ## Key Considerations
 
-### 1. **Hard-Coded Sleep Times**
+### **API Response Time**
 
-The script uses hard-coded sleep intervals (`time.sleep(2)`) to wait for pages and elements to load. While this approach is straightforward and aims to make the program run faster, it may not always be the most efficient or reliable. 
+The API currently takes around 250 seconds to return data. This extended response time is due to the time required to fetch and process multiple pages of items.
 
-- **Consideration:** Depending on the page’s load times, this delay might be too short or too long. For more precise control, consider implementing dynamic checks for content loading. For instance, use Selenium’s WebDriverWait with expected conditions to wait for specific elements or containers to be fully loaded before proceeding.
+- **Consideration:** If you encounter timeouts in your API client, consider increasing the timeout settings for your requests. This adjustment will allow the application to handle longer processing times and improve overall stability during data retrieval.
 
-### 2. **Value Retrieval**
+### **Value Retrieval**
 
 The script currently captures the average value from elements on the web page. Both average and community values are located under the same parent class and share the same class name.
 
 - **Consideration:** If community values are needed instead of average values, you may need to review and update the class name selectors. Since both values are under the same parent class and use the same class name, adapting the code to capture community values should be straightforward if the distinction is required.
 
-### 3. **Dependencies and Environment**
+### **Dependencies and Environment**
 
 - **Dependencies:** Ensure that all required packages listed in `requirements.txt` are installed. Use a virtual environment to manage these dependencies and avoid conflicts with other Python projects.
   
 - **WebDriver Management:** The script uses `webdriver-manager` to automatically handle ChromeDriver binaries. Ensure that you have Google Chrome installed, as it is required for Selenium to function correctly.
 
-### 4. **Error Handling and Logging**
+### **Error Handling and Logging**
 
 The script includes basic error handling and logging configurations. It suppresses warnings from Selenium and other libraries to avoid cluttered logs.
 
