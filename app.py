@@ -7,8 +7,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from concurrent.futures import ThreadPoolExecutor
 import time
 
@@ -56,7 +54,7 @@ def fetch_items_from_page(page_number):
     items = []
     try:
         driver.get(url)
-	time.sleep(1)
+        time.sleep(1)
 
         try:
             no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
