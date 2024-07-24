@@ -1,124 +1,139 @@
-import signal
-import sys
-import logging
-import warnings
+import asyncio
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from quart import Quart, jsonify
+from quart_cors import cors
 import time
-from flask import Flask, jsonify
-from flask_cors import CORS
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 
-# Suppress SSL and other warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='selenium')
-warnings.filterwarnings("ignore", category=ResourceWarning)
-warnings.filterwarnings("ignore", message=".*SSL.*")
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-logging.getLogger('selenium').setLevel(logging.CRITICAL)
+app = Quart(__name__)
+cors(app)
 
-logging.basicConfig(level=logging.ERROR)
-
-app = Flask(__name__)
-CORS(app)
-
-def shutdown(signal, frame):
-    print("Shutting down gracefully...")
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, shutdown)
-signal.signal(signal.SIGTERM, shutdown)
-
-def fetch_items(driver, page_number):
+async def fetch_items(page, page_number, retries=3):
     url = f'https://traderie.com/royalehigh/products?page={page_number}'
     
     items = []
     print(f"Attempting to fetch page {page_number}")
-    
-    try:
-        driver.get(url)
-        
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container'))
-        )
 
-        print(f"Page {page_number} loaded")
-        
-        no_results_message = driver.find_elements(By.CLASS_NAME, 'no-items')
-        if no_results_message and "No results could be found" in no_results_message[0].text:
-            print(f"No results on page {page_number}")
-            return None
-        
-        item_containers = driver.find_elements(By.CLASS_NAME, 'sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
-        if not item_containers:
-            print(f"No item containers found on page {page_number}")
-        else:
-            for container in item_containers:
-                try:
-                    name_container = container.find_element(By.CLASS_NAME, 'sc-czkgLR.fsFCnf')
-                    item_name = name_container.text
-                except:
-                    item_name = "Unknown"
-                try:
-                    value_container = container.find_element(By.CLASS_NAME, 'listing-bells')
-                    item_value = int(value_container.text.replace(',', ''))
-                except:
-                    item_value = 0
-                items.append({"name": item_name, "value": item_value})
+    for attempt in range(retries):
+        try:
+            await page.goto(url, timeout=60000)  # Increase timeout to 60 seconds
+            
+            # Check for no results message before waiting for item containers
+            no_results_message = await page.query_selector('.no-items')
+            if no_results_message:
+                no_results_text = await no_results_message.inner_text()
+                if "No results could be found" in no_results_text:
+                    print(f"No more results starting from page {page_number}. Stopping.")
+                    return items  # Return collected items even if no more items are found
 
-        print(f"Page {page_number}: Found {len(items)} items")
+            # Wait for the specific element to load
+            try:
+                await page.wait_for_selector('.sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container', timeout=15000)
+            except PlaywrightTimeoutError:
+                print(f"TimeoutError: Page.wait_for_selector timed out on page {page_number}")
+                continue  # Retry if timeout occurs
 
-    except Exception as e:
-        print(f"Error on page {page_number}: {e}")
-        return None
+            # Extract items
+            item_containers = await page.query_selector_all('.sc-eqUAAy.sc-SrznA.cZMYZT.WYSac.item-img-container')
+            if not item_containers:
+                print(f"No item containers found on page {page_number}")
+            else:
+                for container in item_containers:
+                    try:
+                        name_container = await container.query_selector('.sc-czkgLR.fsFCnf')
+                        item_name = await name_container.inner_text()
+                    except:
+                        item_name = "Unknown"
+                    try:
+                        value_container = await container.query_selector('.listing-bells')
+                        item_value = int((await value_container.inner_text()).replace(',', ''))
+                    except:
+                        item_value = 0
+                    items.append({"name": item_name, "value": item_value})
 
-    return items
+            print(f"Page {page_number}: Found {len(items)} items")
+            return items
 
-@app.route('/items', methods=['GET'])
-def get_items():
-    all_items = []
-    page_number = 0
-    start_time = time.time()
-    
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--log-level=3")
-    chrome_options.add_argument("--ignore-certificate-errors")
-    chrome_options.add_argument("--allow-insecure-localhost")
-    chrome_options.add_argument("--disable-web-security")
-    chrome_options.add_argument("--blink-settings=imagesEnabled=false")
-    chrome_options.add_argument("--disable-extensions")
-    custom_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    chrome_options.add_argument(f'user-agent={custom_user_agent}')
-    
-    with webdriver.Chrome(
-        service=ChromeService(ChromeDriverManager().install()),
-        options=chrome_options
-    ) as driver:
-        while True:
-            batch_items = []
-            for _ in range(5):
-                items = fetch_items(driver, page_number)
-                if items is None:
-                    break
-                batch_items.extend(items)
-                page_number += 1
+        except PlaywrightTimeoutError as e:
+            print(f"TimeoutError: {e} on page {page_number}")
+            if attempt == retries - 1:
+                print(f"Failed to fetch page {page_number} after {retries} attempts")
 
-            if not batch_items:
-                print(f"No more data starting from page {page_number}. Stopping.")
+        except Exception as e:
+            # Retry logic for network-related errors
+            if 'net::ERR_NETWORK_CHANGED' in str(e):
+                print(f"Network error on page {page_number}: {e}. Retrying... ({attempt + 1}/{retries})")
+                if attempt == retries - 1:
+                    print(f"Failed to fetch page {page_number} due to network error after {retries} attempts")
+            else:
+                print(f"Exception: {e} on page {page_number}")
                 break
 
-            all_items.extend(batch_items)
-    
+    return []
+
+async def staggered_scrape_pages(start_page, batch_size=5, delay=1):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+
+        all_items = []
+        page_number = start_page
+        active_tasks = []
+        semaphore = asyncio.Semaphore(batch_size)  # Control concurrency
+
+        # Cancellation flag
+        cancel_flag = asyncio.Event()
+
+        async def fetch_with_semaphore(page_number):
+            async with semaphore:
+                if cancel_flag.is_set():
+                    return  # Exit early if cancellation is triggered
+                try:
+                    items = await fetch_items(page, page_number)
+                    if items:
+                        all_items.extend(items)
+                    elif not cancel_flag.is_set():
+                        cancel_flag.set()  # Set flag to stop fetching new pages if no items are found
+                except asyncio.CancelledError:
+                    print(f"Task for page {page_number} was cancelled.")
+                await asyncio.sleep(delay)  # Staggered delay
+
+        async def manage_tasks():
+            nonlocal page_number
+            while True:
+                if len(active_tasks) < batch_size and not cancel_flag.is_set():
+                    task = asyncio.create_task(fetch_with_semaphore(page_number))
+                    active_tasks.append(task)
+                    page_number += 1
+
+                # Await completion of the first batch tasks and manage the list of active tasks
+                done, pending = await asyncio.wait(active_tasks, return_when=asyncio.FIRST_COMPLETED)
+
+                # Cancel the remaining tasks if no more pages need to be fetched
+                if not pending and cancel_flag.is_set():
+                    print(f"No more items found starting from page {start_page}. Stopping.")
+                    break
+
+                # Remove completed tasks from the active tasks list
+                active_tasks[:] = [task for task in pending if not task.done()]
+
+        try:
+            await manage_tasks()
+        finally:
+            # Ensure all tasks are cancelled and the browser is closed
+            for task in active_tasks:
+                task.cancel()
+            await browser.close()
+
+        return all_items
+
+@app.route('/items', methods=['GET'])
+async def get_items():
+    start_time = time.time()
+    batch_size = 15  # Number of concurrent requests
+    delay = 0.03  # Delay between requests
+    all_items = await staggered_scrape_pages(0, batch_size, delay)  # Start scraping from page 0
     elapsed_time = time.time() - start_time
     print(f"Scraped {len(all_items)} items in {elapsed_time:.2f} seconds")
-    
     return jsonify(all_items)
 
 if __name__ == '__main__':
