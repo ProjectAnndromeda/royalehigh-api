@@ -1,6 +1,6 @@
 # Royale High API
 
-This is a simple Flask API to fetch Royale High item names and their community values from Traderie.
+This is a Quart API to fetch Royale High item names and their community values from Traderie.
 
 ## Setup Instructions
 
@@ -50,17 +50,25 @@ This is a simple Flask API to fetch Royale High item names and their community v
     pip install -r requirements.txt
     ```
 
-### Running the API
+5. **Install Playwright Browsers**:
 
-1. **Run the Flask Application**:
+    After installing the dependencies, you need to install the necessary browser binaries for Playwright:
 
     ```bash
-    flask run
+    playwright install
+    ```
+
+### Running the API
+
+1. **Run the Quart Application**:
+
+    ```bash
+    python app.py
     ```
 
 2. **Access the API**:
 
-    Open Google Chrome or API client (like Postman) and navigate to:
+    Open Google Chrome or an API client (like Insomnia) and navigate to:
 
     ```
     http://127.0.0.1:5000/items
@@ -90,25 +98,25 @@ This is a simple Flask API to fetch Royale High item names and their community v
 
 ### **API Response Time**
 
-The API currently takes around 250 seconds to return data. This extended response time is due to the time required to fetch and process multiple pages of items.
+The API may take some time to return data due to the process of scraping multiple pages. The script handles pagination and will stop once no more items are detected.
 
 - **Consideration:** If you encounter timeouts in your API client, consider increasing the timeout settings for your requests. This adjustment will allow the application to handle longer processing times and improve overall stability during data retrieval.
 
 ### **Value Retrieval**
 
-The script currently captures the average value from elements on the web page. Both average and community values are located under the same parent class and share the same class name.
+The script captures item names and values from Traderie. It checks for the presence of a "no-items" message to determine if there are no more items to fetch. 
 
-- **Consideration:** If community values are needed instead of average values, you may need to review and update the class name selectors. Since both values are under the same parent class and use the same class name, adapting the code to capture community values should be straightforward if the distinction is required.
+- **Consideration:** Ensure that the page structure on Traderie has not changed, as the script relies on specific class names to find and extract data. If there are updates to the page structure, you might need to adjust the class names in the script.
 
 ### **Dependencies and Environment**
 
 - **Dependencies:** Ensure that all required packages listed in `requirements.txt` are installed. Use a virtual environment to manage these dependencies and avoid conflicts with other Python projects.
-  
-- **WebDriver Management:** The script uses `webdriver-manager` to automatically handle ChromeDriver binaries. Ensure that you have Google Chrome installed, as it is required for Selenium to function correctly.
+
+- **Playwright Management:** The script uses Playwright for browser automation. After installing the required packages, make sure to install the necessary browser binaries with `playwright install`.
 
 ### **Error Handling and Logging**
 
-The script includes basic error handling and logging configurations. It suppresses warnings from Selenium and other libraries to avoid cluttered logs.
+The script includes basic error handling and logging configurations. It is designed to handle common issues like network errors and timeouts, and to retry fetching pages if necessary.
 
 - **Consideration:** Adjust logging levels and error handling according to your debugging needs. More granular error handling might be required based on specific use cases or to improve robustness.
 
@@ -117,4 +125,5 @@ The script includes basic error handling and logging configurations. It suppress
 If you use or modify this code, please include the following attribution in any related documentation or publicly accessible materials: "Powered by Anndromeda™ by Alina."
 
 ## License
+
 This code is provided under the terms of the [LICENSE.md](LICENSE.md) file included in this distribution.
