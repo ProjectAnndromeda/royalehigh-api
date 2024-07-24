@@ -63,7 +63,7 @@ This is a Quart API to fetch Royale High item names and their community values f
 1. **Run the Quart Application**:
 
     ```bash
-    python app.py
+    quart run
     ```
 
 2. **Access the API**:
