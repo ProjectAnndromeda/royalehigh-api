@@ -1,4 +1,3 @@
-Flask
-selenium
-webdriver-manager
-flask-cors
+playwright
+quart
+quart-cors
