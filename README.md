@@ -126,4 +126,4 @@ If you use or modify this code, please include the following attribution in any 
 
 ## License
 
-This code is provided under the terms of the [LICENSE.md](LICENSE.md) file included in this distribution.
+This code is provided under the terms of the [LICENSE.txt](LICENSE.txt) file included in this distribution.
